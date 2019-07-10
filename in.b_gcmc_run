@@ -1,0 +1,30 @@
+unfix allnvt
+
+# GCMC shit
+variable Nvap equal count(solvent)
+
+fix reflect solvent wall/reflect zhi EDGE units box
+fix mc solvent gcmc 10000 500 0 5 12843 0.85 -3.5 1.0 region solvent group solvent
+
+compute vaptemp solvent temp
+compute_modify vaptemp dynamic/dof yes
+
+fix vapnvt solvent nvt temp 0.85 0.85 5.0
+fix_modify vapnvt temp vaptemp
+compute mdtemp mobileNoVap temp
+thermo 1000
+thermo_style custom step pe ke v_Nvap c_mdtemp c_vaptemp
+fix mdnvt mobileNoVap nvt temp 0.85 0.85 5.0
+
+# Output
+dump atomDump all atom 100000 dump.gcmc
+
+compute cc1 poly1 chunk/atom bin/1d z 0.0 0.25
+fix dens1 poly1 ave/chunk 1000 100 100000 cc1 density/number file PolyDens.dat
+compute cc2 solvent chunk/atom bin/1d z 0.0 0.25
+fix dens2 solvent ave/chunk 1000 100 100000 cc2 density/number file SolvDens.dat
+compute dist all rdf 10 5 2 5 5
+fix rdf all ave/time 1000 100 100000 c_dist[*] file rdf.dat mode vector
+
+run 3000000
+write_data data.gcmc
