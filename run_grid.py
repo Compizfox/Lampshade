@@ -21,8 +21,8 @@ coordList = list(product(epp, eps))
 def sample_coord(epp, eps):
 	"""
 	Simulate a system with the given parameters
-	:param epp: epsilon
-	:param eps:
+	:param epp: self-interation of polymer
+	:param eps: interaction of polymer with solvent
 	:return:
 	"""
 	# Create a subdirectory for every simulation
