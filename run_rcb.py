@@ -10,9 +10,10 @@ equilibration and long initial GCMC run of 9M timesteps. bisection_job() then ca
 bisectioning; the first iteration will not be simulated because it was the inital run.
 """
 
-from multiprocessing import Pool
+from multiprocessing import Pool, current_process
 from os import mkdir, chdir, path
 from typing import Tuple, List, Callable
+from datetime import datetime
 
 from lammps import lammps
 import numpy as np
@@ -69,6 +70,7 @@ def recursive_bisect(lmp, l: Tuple[float, float], r: Tuple[float, float]) -> Non
 		midpoint = tuple((np.array(l) + np.array(r)) / 2)
 
 		# Run simulation
+		print("{} {}: Simulating {}...".format(datetime.now(), current_process().name, midpoint))
 		classification = sample_coord(lmp, *midpoint)
 
 		# Determine if we're to the left or right
@@ -80,6 +82,8 @@ def recursive_bisect(lmp, l: Tuple[float, float], r: Tuple[float, float]) -> Non
 			return recursive_bisect(lmp, l, midpoint)
 		else:
 			raise RuntimeError("This should not happen. Classification = {}".format(classification))
+
+	print("{} {}: Finished RCB (distance below threshold).".format(datetime.now(), current_process().name))
 
 
 def bisection_job(l: Tuple[float, float], r: Tuple[float, float]) -> None:
@@ -93,7 +97,7 @@ def bisection_job(l: Tuple[float, float], r: Tuple[float, float]) -> None:
 	midpoint = tuple((np.array(l) + np.array(r)) / 2)
 
 	# Instantiate LAMMPS object
-	lmp = lammps()
+	lmp = lammps(cmdargs=['-echo', 'log', '-screen', 'none'])
 
 	epp, eps = midpoint
 
@@ -103,8 +107,10 @@ def bisection_job(l: Tuple[float, float], r: Tuple[float, float]) -> None:
 		# Run 'header' of equilibration input file
 		lmp.file('../in.b_equi_header')
 		# Equilibrate
+		print("{} {}: Starting equilibration(epp={}, eps={})...".format(datetime.now(), current_process().name, epp, eps))
 		lmp.file('../in.b_equi_run')
 		# Initial GCMC run (from scratch, 9M timesteps)
+		print("{} {}: Equilibration done. Starting initial GCMC run...".format(datetime.now(), current_process().name))
 		lmp.file('../in.b_gcmc_rcb')
 		lmp.command('run 9000000')
 		lmp.command('write_data	data.gcmc')
@@ -112,6 +118,7 @@ def bisection_job(l: Tuple[float, float], r: Tuple[float, float]) -> None:
 	run_in_subdir(sim, 'rcb_{}_{}'.format(epp, eps))
 
 	# Start recursive bisectioning
+	print("{} {}: Starting RCB...".format(datetime.now(), current_process().name))
 	recursive_bisect(lmp, l, r)
 
 	lmp.close()
