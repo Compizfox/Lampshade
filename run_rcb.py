@@ -7,7 +7,7 @@ The pairs come from the results of the grid sampling; they are pairs of points t
 Bisectioning will occur between the pairs until the distance is less than RCB_THRESHOLD.
 Every bisectioning job is run in parallel using Python multiprocessing and starts in bisection_job() with an
 equilibration and long initial GCMC run of 9M timesteps. bisection_job() then calls recursive_bisect() to start the real
-bisectioning; the first iteration will not be simulated because it was the inital run.
+bisectioning; the first iteration will not be simulated because it was the initial run.
 """
 
 from multiprocessing import Pool, current_process
@@ -39,7 +39,7 @@ def sample_coord(lmp: lammps, epp: float, eps: float) -> int:
 	"""
 	Simulate a system with the given parameters and analyse the results to return a regime classification.
 	:param lmp: LAMMPS instance
-	:param epp: self-interation of polymer
+	:param epp: self-interaction of polymer
 	:param eps: interaction of polymer with solvent
 	:return:    Classification
 	"""
@@ -107,10 +107,12 @@ def bisection_job(l: Tuple[float, float], r: Tuple[float, float]) -> None:
 		# Run 'header' of equilibration input file
 		lmp.file('../in.b_equi_header')
 		# Equilibrate
-		print("{} {}: Starting equilibration(epp={}, eps={})...".format(datetime.now(), current_process().name, epp, eps))
+		print("{} {}: Starting equilibration (epp={}, eps={})...".format(datetime.now(), current_process().name, epp, eps))
 		lmp.file('../in.b_equi_run')
 		# Initial GCMC run (from scratch, 9M timesteps)
-		print("{} {}: Equilibration done. Starting initial GCMC run...".format(datetime.now(), current_process().name))
+		print("{} {}: Equilibration done. Starting initial GCMC run (epp={}, eps={})...".format(datetime.now(),
+		                                                                                        current_process().name,
+		                                                                                        epp, eps))
 		lmp.file('../in.b_gcmc_rcb')
 		lmp.command('run 9000000')
 		lmp.command('write_data	data.gcmc')
