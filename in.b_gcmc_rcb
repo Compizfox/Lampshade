@@ -18,3 +18,8 @@ compute cc1 poly1 chunk/atom bin/1d z 0.0 0.25
 fix dens1 poly1 ave/chunk 1000 100 100000 cc1 density/number file PolyDens.dat
 compute cc2 solvent chunk/atom bin/1d z 0.0 0.25
 fix dens2 solvent ave/chunk 1000 100 100000 cc2 density/number file SolvDens.dat
+
+# Redefine dynamic pair coeffs
+#                  e      s   cutoff
+pair_coeff 1*3 1*3 ${epp} 1.0 2.5
+pair_coeff 1*3 5   ${eps} 1.0 2.5
