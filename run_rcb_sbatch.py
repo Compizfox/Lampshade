@@ -26,17 +26,26 @@ from RegimeClassifier import RegimeClassifier
 
 RCB_THRESHOLD = 0.05
 
-# Boundary between regimes to probe
-REGIMES = (2, 1)
+# Regimes to probe
+# Ab, ad, no
+REGIMES = (2, 1, 0)
 
-# List of 2-tuples of 2-tuples, representing initial outer bound coords
-pairs: List[Tuple[Tuple[float, float], Tuple[float, float]]] = [
-	((1.0, 1.4), (1.4, 1.4)),
-	((1.0, 1.4), (1.4, 1.0)),
-	((1.0, 1.4), (1.0, 1.0)),
-	((0.6, 1.0), (1.0, 1.0)),
-	((0.6, 1.0), (0.6, 0.6)),
-	((0.6, 1.4), (1.0, 1.0)),
+# List of 3-tuples of 2-tuples, representing initial outer bound coords (first and second tuples)
+# and the regime boundary (indexes in the REGIMES tuple above)
+pairs: List[Tuple[Tuple[float, float], Tuple[float, float], Tuple[int, int]]] = [
+	((1.0, 1.4), (1.4, 1.4), (0, 1)),
+	((1.0, 1.4), (1.4, 1.0), (0, 1)),
+	((1.0, 1.4), (1.0, 1.0), (0, 1)),
+	((0.6, 1.0), (1.0, 1.0), (0, 1)),
+	((0.6, 1.0), (0.6, 0.6), (0, 1)),
+	((0.6, 1.4), (1.0, 1.0), (0, 1)),
+	((0.6, 1.0), (1.0, 0.6), (0, 2)),
+	((0.6, 0.6), (0.6, 0.2), (1, 2)),
+	((0.6, 0.6), (1.0, 0.6), (1, 2)),
+	((0.6, 0.6), (1.0, 0.2), (1, 2)),
+	((1.0, 1.0), (1.0, 0.6), (1, 2)),
+	((1.4, 1.0), (1.4, 0.6), (1, 2)),
+	((2.0, 1.0), (2.0, 0.6), (1, 2)),
 ]
 
 
@@ -67,12 +76,14 @@ def sample_coord(last_restart_filename: str, epp: float, eps: float) -> Tuple[in
 	return rc.get_classification(), '../{}/restart.gcmc'.format(subdir)
 
 
-def recursive_bisect(last_restart_filename: str, l: Tuple[float, float], r: Tuple[float, float]) -> None:
+def recursive_bisect(last_restart_filename: str, l: Tuple[float, float], r: Tuple[float, float],
+                     boundary: Tuple[int, int]) -> None:
 	"""
 	Returns the middlepoint between two coords
 	:param last_restart_filename: Filename of the restart file to resume from.
 	:param l:   Left coord
 	:param r:   Right coord
+	:param boundary: Regime boundary (a tuple of indexes corresponding to the REGIMES constant)
 	"""
 	if np.linalg.norm(np.array(l) - np.array(r)) > RCB_THRESHOLD:
 		# Calculate midpoint between two bounds
@@ -82,26 +93,36 @@ def recursive_bisect(last_restart_filename: str, l: Tuple[float, float], r: Tupl
 		print("{}: Simulating {}...".format(datetime.now(), midpoint))
 		classification, last_restart_filename = sample_coord(last_restart_filename, *midpoint)
 
+		message_string = "Classification: {}. Boundary regimes: ({}, {})"\
+			.format(classification, REGIMES[boundary[0]], REGIMES[boundary[1]])
+
 		# Determine if we're to the left or right
 		try:
-			if REGIMES.index(classification) == 0:
+			if REGIMES.index(classification) <= boundary[0]:
 				# We're to the left, make current coord the left bound and recurse
-				return recursive_bisect(last_restart_filename, midpoint, r)
-			elif REGIMES.index(classification) == 1:
+				print("To the left of boundary. " + message_string)
+				return recursive_bisect(last_restart_filename, midpoint, r, boundary)
+			elif REGIMES.index(classification) >= boundary[1]:
 				# We're to the right, make current coord the right bound and recurse
-				return recursive_bisect(last_restart_filename, l, midpoint)
+				print("To the right of boundary. " + message_string)
+				return recursive_bisect(last_restart_filename, l, midpoint, boundary)
+			else:
+				# We're in a regime in between the two. We're done here.
+				print("Found regime between boundary regimes, finishing. " + message_string)
+				pass
 		except ValueError:
-			raise RuntimeError("This should not happen. Classification = {}".format(classification))
+			raise RuntimeError("This should not happen. Classification not in REGIMES tuple." + message_string)
 
 	print("{}: Finished RCB (distance below threshold).".format(datetime.now()))
 
 
-def bisection_job(l: Tuple[float, float], r: Tuple[float, float]) -> None:
+def bisection_job(l: Tuple[float, float], r: Tuple[float, float], boundary: Tuple[int, int]) -> None:
 	"""
 	Runs equilibration and initial GCMC run.
 	Then calls recursive_bisect().
 	:param l: Left coord
 	:param r: Right coord
+	:param boundary: Regime boundary (a tuple of indexes corresponding to the REGIMES constant)
 	"""
 	# Calculate midpoint between two bounds for equilibration
 	midpoint = tuple((np.array(l) + np.array(r)) / 2)
@@ -124,13 +145,13 @@ def bisection_job(l: Tuple[float, float], r: Tuple[float, float]) -> None:
 	buf.write('write_data data.gcmc\n')
 	buf.write('write_restart restart.gcmc\n')
 
-	print("{}: Starting equilibration and initial GCMC run (epp={}, eps={})...".format(datetime.now(), epp, eps))
+	print("{}: Starting equilibration and initial GCMC run ({}, {})...".format(datetime.now(), epp, eps))
 	subdir = 'rcb_{}_{}'.format(epp, eps)
 	run_in_subdir(buf.getvalue(), subdir)
 
 	# Start recursive bisectioning
 	print("{}: Starting RCB...".format(datetime.now()))
-	recursive_bisect('../{}/restart.gcmc'.format(subdir), l, r)
+	recursive_bisect('../{}/restart.gcmc'.format(subdir), l, r, boundary)
 
 
 def run_in_subdir(input_script: str, subdir: str) -> None:
@@ -143,7 +164,7 @@ def run_in_subdir(input_script: str, subdir: str) -> None:
 	if not path.isdir(subdir):
 		mkdir(subdir)
 		chdir(subdir)
-		run('lmp_daily', input=input_script, universal_newlines=True, stdout=DEVNULL)
+		run('srun lmp', input=input_script, universal_newlines=True, stdout=DEVNULL)
 		chdir('../')
 
 
