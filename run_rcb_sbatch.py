@@ -164,11 +164,11 @@ def run_in_subdir(input_script: str, subdir: str) -> None:
 	if not path.isdir(subdir):
 		mkdir(subdir)
 		chdir(subdir)
-		run('srun lmp', input=input_script, universal_newlines=True, stdout=DEVNULL)
+		run('srun lmp', input=input_script, universal_newlines=True, stdout=DEVNULL, shell=True)
 		chdir('../')
 
 
 if __name__ == '__main__':
 	# Read from SLURM_ARRAY_TASK_ID environment variable which pair to run
-	pair = pairs[environ['SLURM_ARRAY_TASK_ID']]
+	pair = pairs[int(environ['SLURM_ARRAY_TASK_ID'])]
 	bisection_job(*pair)
