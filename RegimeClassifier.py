@@ -22,9 +22,10 @@ class RegimeClassifier:
 	FILENAME_DENS_POLY = 'PolyDens.dat'
 	FILENAME_DENS_SOLV = 'SolvDens.dat'
 
-	CWT_WIDTHS = range(6, 45)
+	CWT_WIDTHS = range(1, 15)
 	SG_WINDOW = 21
 	SG_ORDER = 2
+	SOLV_TRIM = 12
 
 	def __init__(self, directory: str, filename_poly: str = FILENAME_DENS_POLY, filename_solvent: str = FILENAME_DENS_SOLV):
 		self.directory: str = directory
@@ -89,24 +90,29 @@ class RegimeClassifier:
 		# Inflection point is minimum of first derivative
 		return poly_ta_smoothed.argmin()
 
-	def get_solv_peak(self, cwt_widths: Sequence = CWT_WIDTHS) -> np.ScalarType:
+	def get_solv_peak(self, cwt_widths: Sequence = CWT_WIDTHS, trim: int = SOLV_TRIM) -> np.ScalarType:
 		"""
 		Finds the peak in the solvent density profile with the help of a continuous wavelet transform smoothing.
 		:param cwt_widths: Array with widths that are used for the wavelets that the data is convolved with.
 		                   Make smallest value smaller for more precise peak localisation, make largest value larger
 		                   for more smoothing.
+		:param trim: Number of indices to trim from the beginning (left part) of the solvent profile.
 		:return: Index of the peak
 		"""
-		# Find peak of the solvent profile
-		return find_peaks_cwt(self.solv_ta[:, 2], cwt_widths)[0]
+		# Find peaks of the solvent profile
+		peaks = find_peaks_cwt(self.solv_ta[trim:, 2], cwt_widths) + trim
 
-	def get_classification(self, overlap_threshold=0.2, cwt_widths: Sequence = CWT_WIDTHS, window: int = SG_WINDOW,
-	                       order: int = SG_ORDER) -> int:
+		# Get highest peak
+		return peaks[self.solv_ta[peaks, 2].argmax()]
+
+	def get_classification(self, overlap_threshold=0.50, cwt_widths: Sequence = CWT_WIDTHS, trim: int = SOLV_TRIM,
+	                       window: int = SG_WINDOW, order: int = SG_ORDER) -> int:
 		"""
 		Get the regime classification the system is in, determined by the combination of the overlap integral and
 		location of the solvent peak with respect to the polymer surface (inflection point in the density profile)
 		:param overlap_threshold: Threshold for the overlap integral below which the system is considered to have "no sorption"
 		:param cwt_widths: see get_solv_peak()
+		:param trim: Number of indices to trim from the beginning (left part) of the solvent profile.
 		:param window: see get_poly_inflection()
 		:param order: see get_poly_inflection()
 		:return: Classification (0, 1, or 2)
@@ -114,7 +120,7 @@ class RegimeClassifier:
 		if self.get_overlap() < overlap_threshold:
 			return 0
 		# Overlap > threshold, so we have sorption
-		if self.get_solv_peak(cwt_widths) > self.get_poly_inflection(window, order):
+		if self.get_solv_peak(cwt_widths, trim) > self.get_poly_inflection(window, order):
 			return 1
 		# Solvent peak is right of the polymer inflection point, so we have adsorption
 		return 2
