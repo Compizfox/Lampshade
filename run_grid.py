@@ -23,8 +23,8 @@ def sample_coord(epp: float, eps: float) -> None:
 	"""
 	# Build LAMMPS input script
 	buf = StringIO()
-	buf.write('variable epp equal {0:.2f}\n'.format(epp))
-	buf.write('variable eps equal {0:.2f}\n'.format(eps))
+	buf.write('variable epp equal {:.2f}\n'.format(epp))
+	buf.write('variable eps equal {:.2f}\n'.format(eps))
 	# 'header' of equilibration input file
 	with open('in.b_equi_header') as f:
 		buf.write(f.read())
@@ -37,7 +37,7 @@ def sample_coord(epp: float, eps: float) -> None:
 	buf.write('run {}\n'.format(args.run))
 	buf.write('write_data data.gcmc\n')
 
-	subdir = 'grid_{0:.2f}_{0:.2f}'.format(epp, eps)
+	subdir = 'grid_{:.2f}_{:.2f}'.format(epp, eps)
 	run_in_subdir(buf.getvalue(), subdir)
 
 
