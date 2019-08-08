@@ -5,7 +5,7 @@ Samples a mesh grid in the 2D EPP-EPS parameter space.
 No MPI; different points are simulated in parallel using Python multiprocessing.
 """
 
-from multiprocessing import Pool, current_process
+from multiprocessing import Pool, current_process, cpu_count
 from itertools import product
 from os import mkdir, chdir, path
 from subprocess import run, DEVNULL
@@ -72,6 +72,8 @@ if __name__ == '__main__':
 
 	# Create cartesian product of two parameters. Returns list of tuples (epp, eps)
 	coordList = list(product(args.epp, args.eps))
+
+	print("Got {} jobs, distributed over {} workers.".format(len(coordList), cpu_count()))
 
 	# Create pool of number of cores workers
 	with Pool() as p:
