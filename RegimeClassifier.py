@@ -1,24 +1,24 @@
 """
-Analyses density profiles and radial distribution functions to classify the system in one of three sorption states.
-0: No sorption
-1: Adsorption, no absorption
-2: Adsorption,    absorption
+Exports the RegimeClassifier class.
 """
 
-import re
-from io import StringIO
 from sys import path
 from typing import Sequence
-path.append("../../shared_python_scripts/")
 
 import numpy as np
 from scipy.signal import find_peaks_cwt, savgol_filter
 
+path.append("../../shared_python_scripts/")
 from BrushDensityParser import BrushDensityParser
 
 
 class RegimeClassifier:
-	FILENAME_RDF = 'rdf.dat'
+	"""
+	Analyses density profiles and radial distribution functions to classify the system in one of three sorption states.
+	0: No sorption
+	1: Adsorption, no absorption
+	2: Adsorption,    absorption
+	"""
 	FILENAME_DENS_POLY = 'PolyDens.dat'
 	FILENAME_DENS_SOLV = 'SolvDens.dat'
 
@@ -31,44 +31,12 @@ class RegimeClassifier:
 		self.directory: str = directory
 		bdp = BrushDensityParser()
 
-		densPoly = bdp.loadDensity(directory + '/' + filename_poly)
-		densSolv = bdp.loadDensity(directory + '/' + filename_solvent)
+		dens_poly = bdp.loadDensity(directory + '/' + filename_poly)
+		dens_solv = bdp.loadDensity(directory + '/' + filename_solvent)
 
 		# time-averaged profiles
-		self.poly_ta: np.ndarray = np.mean(densPoly, axis=0)
-		self.solv_ta: np.ndarray = np.mean(densSolv, axis=0)
-
-	def parse_rdf(self, filename: str = FILENAME_RDF) -> np.ndarray:
-		# Use regex to strip the timestep lines
-		with open(self.directory + '/' + filename) as f:
-			p = re.compile(r'^\d+ \d+\n', re.MULTILINE)
-			string = p.sub('', f.read())
-
-		data = np.loadtxt(StringIO(string), usecols=(0, 3, 5))
-
-		# The data array is a '2D flattened' representation of a 3D array
-		# (the third dimension being the time). We need to first get the number of
-		# bins and then reshape the array using that number
-
-		# Get the index where the second bin is 1 (that is the number of bins)
-		numBins = np.nonzero(data[:, 0] == 1)[0][1]
-
-		reshaped = data.reshape((-1, numBins, 3))
-
-		# We're only really interested in the coordination numbers of the last bins
-		return reshaped[:, -1, 1:3]
-
-	def get_coordination_numbers(self, filename: str = FILENAME_RDF) -> np.ndarray:
-		"""
-		:return: a two-element array containing the coordination number of solvent with polymer,
-		         and the coordination number of solvent with itself
-		"""
-		data = self.parse_rdf(filename)
-		return np.mean(data[5:-1, :], axis=0)
-
-	def get_ratio(self, filename: str = FILENAME_RDF) -> np.ScalarType:
-		data_avg = self.get_coordination_numbers(filename)
-		return data_avg[1] / data_avg[0]
+		self.poly_ta: np.ndarray = np.mean(dens_poly, axis=0)
+		self.solv_ta: np.ndarray = np.mean(dens_solv, axis=0)
 
 	def get_overlap(self) -> np.ScalarType:
 		"""
