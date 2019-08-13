@@ -2,13 +2,11 @@
 Exports the RegimeClassifier class.
 """
 
-from sys import path
 from typing import Sequence
 
 import numpy as np
 from scipy.signal import find_peaks_cwt, savgol_filter
 
-path.append("../../shared_python_scripts/")
 from BrushDensityParser import BrushDensityParser
 
 
@@ -27,12 +25,18 @@ class RegimeClassifier:
 	SG_ORDER = 2
 	SOLV_TRIM = 12
 
-	def __init__(self, directory: str, filename_poly: str = FILENAME_DENS_POLY, filename_solvent: str = FILENAME_DENS_SOLV):
+	def __init__(self, directory: str, filename_poly: str = FILENAME_DENS_POLY,
+	             filename_solvent: str = FILENAME_DENS_SOLV):
+		"""
+		:param directory: String containing the path to the base directory containing the files.
+		:param filename_poly: String containing the filename of the polymer density file.
+		:param filename_solvent: String containing the filename of the solvent density file.
+		"""
 		self.directory: str = directory
 		bdp = BrushDensityParser()
 
-		dens_poly = bdp.loadDensity(directory + '/' + filename_poly)
-		dens_solv = bdp.loadDensity(directory + '/' + filename_solvent)
+		dens_poly = bdp.load_density(directory + '/' + filename_poly)
+		dens_solv = bdp.load_density(directory + '/' + filename_solvent)
 
 		# time-averaged profiles
 		self.poly_ta: np.ndarray = np.mean(dens_poly, axis=0)
