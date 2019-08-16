@@ -77,7 +77,8 @@ if __name__ == '__main__':
 	# Create cartesian product of two parameters. Returns list of tuples (epp, eps)
 	coordList = list(product(args.epp, args.eps))
 
-	print("Got {} jobs, distributed over {} workers.".format(len(coordList), cpu_count()))
+	print("Got {} jobs, distributed over {} workers:".format(len(coordList), cpu_count()))
+	print(*coordList, sep="\n")
 
 	# Create pool of number of cores workers
 	with Pool() as p:
