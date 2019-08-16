@@ -14,17 +14,19 @@ from datetime import datetime
 import argparse
 
 
-def sample_coord(epp: float, eps: float) -> None:
+def sample_coord(epp: float, eps: float, p: float) -> None:
 	"""
 	Simulate a system with the given parameters
-	:param epp: self-interation of polymer
-	:param eps: interaction of polymer with solvent
+	:param epp: Self-interation of polymer
+	:param eps: Interaction of polymer with solvent
+	:param p: Pressure of the solvent
 	:return:
 	"""
 	# Build LAMMPS input script
 	buf = StringIO()
 	buf.write('variable epp equal {:.2f}\n'.format(epp))
 	buf.write('variable eps equal {:.2f}\n'.format(eps))
+	buf.write('variable p equal {:.2f}\n'.format(p))
 	# 'header' of equilibration input file
 	with open('in.b_equi_header') as f:
 		buf.write(f.read())
@@ -37,7 +39,7 @@ def sample_coord(epp: float, eps: float) -> None:
 	buf.write('run {}\n'.format(args.run))
 	buf.write('write_data data.gcmc\n')
 
-	subdir = 'grid_{:.2f}_{:.2f}'.format(epp, eps)
+	subdir = 'grid_{:.2f}_{:.2f}_{:.2f}'.format(epp, eps, p)
 	run_in_subdir(buf.getvalue(), subdir)
 
 
@@ -68,6 +70,8 @@ if __name__ == '__main__':
 	                    help="Comma-separated list of Epp values")
 	parser.add_argument("eps", type=lambda s: [float(i) for i in s.split(',')],
 	                    help="Comma-separated list of Eps values")
+	parser.add_argument("p", type=lambda s: [float(i) for i in s.split(',')],
+	                    help="Comma-separated list of pressure values")
 	parser.add_argument("--dry-run", action="store_true", help="Don't actually do anything productive.")
 	parser.add_argument("-l", "--lammps-path", default='lmp_daily',
 	                    help="Path to the LAMMPS binary. May be a command, like \"mpirun lmp\"")
@@ -75,7 +79,7 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	# Create cartesian product of two parameters. Returns list of tuples (epp, eps)
-	coordList = list(product(args.epp, args.eps))
+	coordList = list(product(args.epp, args.eps, args.p))
 
 	print("Got {} jobs, distributed over {} workers:".format(len(coordList), cpu_count()))
 	print(*coordList, sep="\n")
