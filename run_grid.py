@@ -8,7 +8,7 @@ No MPI; different points are simulated in parallel using Python multiprocessing.
 from multiprocessing import Pool, current_process, cpu_count
 from itertools import product
 from os import mkdir, chdir, path
-from subprocess import run, DEVNULL
+from subprocess import run
 from io import StringIO
 from datetime import datetime
 import argparse
@@ -53,7 +53,8 @@ def run_in_subdir(input_script: str, subdir: str) -> None:
 		if not args.dry_run:
 			mkdir(subdir)
 			chdir(subdir)
-			run(args.lammps_path, input=input_script, universal_newlines=True, stdout=DEVNULL, shell=True)
+			with open('log.{}'.format(subdir), 'w') as f:
+				run(args.lammps_path, input=input_script, universal_newlines=True, stdout=f, shell=True)
 			chdir('../')
 			print("{} {}: Finished {}.".format(datetime.now(), current_process().name, subdir))
 	else:

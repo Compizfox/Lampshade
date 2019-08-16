@@ -4,6 +4,7 @@ atom_style bond
 neighbor 0.8 bin
 neigh_modify delay 1 check yes
 comm_modify vel yes
+log none
 
 neigh_modify	exclude type 4 4
 read_data ../b_raw.pos
