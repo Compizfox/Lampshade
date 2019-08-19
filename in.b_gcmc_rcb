@@ -19,6 +19,13 @@ fix dens1 poly1 ave/chunk 1000 100 100000 cc1 density/number file PolyDens.dat
 compute cc2 solvent chunk/atom bin/1d z 0.0 0.25
 fix dens2 solvent ave/chunk 1000 100 100000 cc2 density/number file SolvDens.dat
 
+# Output pressure in solvent region
+variable       solvol equal 30.975*35.4637*10
+compute        peratom solvent stress/atom vaptemp
+compute        p       solvent reduce/region solvent sum c_peratom[1] c_peratom[2] c_peratom[3]
+variable       press equal -(c_p[1]+c_p[2]+c_p[3])/(3*v_solvol)
+thermo_style   custom step temp pe etotal press vol v_press
+
 # Redefine dynamic pair coeffs
 #                  e      s   cutoff
 pair_coeff 1*3 1*3 ${epp} 1.0 2.5
