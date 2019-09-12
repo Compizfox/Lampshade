@@ -36,7 +36,7 @@ class Simulation:
 		buf = StringIO()
 		buf.write('variable epp equal {:.2f}\n'.format(epp))
 		buf.write('variable eps equal {:.2f}\n'.format(eps))
-		buf.write('variable p equal {:.2f}\n'.format(p))
+		buf.write('variable p equal {:.4f}\n'.format(p))
 		# 'header' of equilibration input file
 		with open('in.b_equi_header') as f:
 			buf.write(f.read())
@@ -49,7 +49,7 @@ class Simulation:
 		buf.write('run {}\n'.format(self.run))
 		buf.write('write_data data.gcmc\n')
 
-		subdir = 'grid_{:.2f}_{:.2f}_{:.2f}'.format(epp, eps, p)
+		subdir = 'grid_{:.2f}_{:.2f}_{:.4f}'.format(epp, eps, p)
 		self.run_in_subdir(buf.getvalue(), subdir)
 
 	def run_in_subdir(self, input_script: str, subdir: str) -> None:
