@@ -18,10 +18,12 @@ from Simulation import Simulation
 # We use a function with a global var here over a closure in __main__ because non-module level functions are not
 # callable by Pool.starmap for some reason
 def start_sim(epp: float, eps: float, p: float) -> None:
-	global args
 	sim = Simulation(args.lammps_path, args.run, args.dry_run, current_process().name)
 	sim.sample_coord(epp, eps, p)
 
+def init_pool(args_dict):
+	global args
+	args = args_dict
 
 if __name__ == '__main__':
 	# Parse CLI arguments
@@ -37,7 +39,7 @@ if __name__ == '__main__':
 	                    help="Path to the LAMMPS binary. May be a command, like \"mpirun lmp\"")
 	parser.add_argument("-r", "--run", type=int, default=9000000, help="Run GCMC for n timesteps")
 	args = parser.parse_args()
-
+	
 	# Create cartesian product of two parameters. Returns list of tuples (epp, eps)
 	coordList = list(product(args.epp, args.eps, args.p))
 
@@ -45,5 +47,5 @@ if __name__ == '__main__':
 	print(*coordList, sep="\n")
 
 	# Create pool of number of cores workers
-	with Pool() as p:
+	with Pool(cpu_count(), initializer=init_pool, initargs=(args,)) as p:
 		p.starmap(start_sim, coordList)
