@@ -39,9 +39,9 @@ class Simulation:
 		buf.write('variable epp equal {:.2f}\n'.format(epp))
 		buf.write('variable eps equal {:.2f}\n'.format(eps))
 		if self.pmu_choice == 'p':
-			buf.write('variable pmu equal pressure {:.4f}\n'.format(pmu))
+			buf.write('variable pmu equal "pressure {:.4f}"\n'.format(pmu))
 		elif self.pmu_choice == 'mu':
-			buf.write('variable pmu equal mu {:.4f}\n'.format(pmu))
+			buf.write('variable pmu equal "mu {:.4f}"\n'.format(pmu))
 		else:
 			raise RuntimeError("This should not happen")
 		# 'header' of equilibration input file
