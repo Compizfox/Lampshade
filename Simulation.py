@@ -12,31 +12,38 @@ class Simulation:
 	"""
 	Runs a vapour hydrated brush simulation in a standard manner. Wraps LAMMPS.
 	"""
-	def __init__(self, command: str, run: int, dry_run: bool = False, prefix: str = ""):
+	def __init__(self, command: str, run: int, pmu_choice: str, dry_run: bool = False, prefix: str = ""):
 		"""
 		:param command: Command to run to call LAMMPS.
 		:param run: Number of timesteps to simulate for.
+		:param pmu: Wether to specify pressure ("p") or chemical potential ("mu")
 		:param dry_run: Doesn't do anything productive if true.
 		:param prefix: String to prepend to all print() output.
 		"""
+		self.pmu_choice = pmu_choice
 		self.command = command
 		self.run = run
 		self.dry_run = dry_run
 		self.prefix = prefix
 
-	def sample_coord(self, epp: float, eps: float, p: float) -> None:
+	def sample_coord(self, epp: float, eps: float, pmu: float) -> None:
 		"""
 		Simulate a system with the given parameters
 		:param epp: Self-interation of polymer
 		:param eps: Interaction of polymer with solvent
-		:param p: Pressure of the solvent
+		:param pmu: Pressure/chemical potential of the solvent
 		:return:
 		"""
 		# Build LAMMPS input script
 		buf = StringIO()
 		buf.write('variable epp equal {:.2f}\n'.format(epp))
 		buf.write('variable eps equal {:.2f}\n'.format(eps))
-		buf.write('variable p equal {:.4f}\n'.format(p))
+		if self.pmu_choice == 'p':
+			buf.write('variable pmu equal pressure {:.4f}\n'.format(pmu))
+		elif self.pmu_choice == 'mu':
+			buf.write('variable pmu equal mu {:.4f}\n'.format(pmu))
+		else:
+			raise RuntimeError("This should not happen")
 		# 'header' of equilibration input file
 		with open('in.b_equi_header') as f:
 			buf.write(f.read())
@@ -49,7 +56,7 @@ class Simulation:
 		buf.write('run {}\n'.format(self.run))
 		buf.write('write_data data.gcmc\n')
 
-		subdir = 'grid_{:.2f}_{:.2f}_{:.4f}'.format(epp, eps, p)
+		subdir = 'grid_{:.2f}_{:.2f}_{:.4f}'.format(epp, eps, pmu)
 		self.run_in_subdir(buf.getvalue(), subdir)
 
 	def run_in_subdir(self, input_script: str, subdir: str) -> None:
