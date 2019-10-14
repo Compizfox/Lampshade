@@ -44,10 +44,12 @@ class RegimeClassifier:
 
 	def get_overlap(self) -> np.ScalarType:
 		"""
-		Calculate the overlap integral between the polymer density and solvent density profiles.
+		Calculate the overlap integral between the polymer density and solvent density profiles. Returns value of the
+		area in units sigma^-2.
 		:return:
 		"""
-		return np.trapz(self.solv_ta[:, 2] * self.poly_ta[:, 2])
+		poly_ta_norm = self.poly_ta[:, 2] / self.poly_ta[:, 2].max()
+		return np.trapz(self.solv_ta[:, 2] * poly_ta_norm)
 
 	def get_poly_inflection(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> np.ScalarType:
 		"""
@@ -77,8 +79,21 @@ class RegimeClassifier:
 		# Get highest peak
 		return peaks[self.solv_ta[peaks, 2].argmax()]
 
-	def get_classification(self, overlap_threshold=0.50, cwt_widths: Sequence = CWT_WIDTHS, trim: int = SOLV_TRIM,
-	                       window: int = SG_WINDOW, order: int = SG_ORDER) -> int:
+	def get_solv_area_in(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> np.ScalarType:
+		"""
+		Calculate the integral of the solvent density profile inside the brush.
+		:return:
+		"""
+		return np.trapz(self.solv_ta[:self.get_poly_inflection(window, order), 2])
+
+	def get_solv_area_out(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> np.ScalarType:
+		"""
+		Calculate the integral of the solvent density profile outside the brush.
+		:return:
+		"""
+		return np.trapz(self.solv_ta[self.get_poly_inflection(window, order):, 2])
+
+	def get_classification(self, in_threshold = 15, out_threshold = 4, window: int = SG_WINDOW, order: int = SG_ORDER) -> int:
 		"""
 		Get the regime classification the system is in, determined by the combination of the overlap integral and
 		location of the solvent peak with respect to the polymer surface (inflection point in the density profile)
@@ -89,10 +104,10 @@ class RegimeClassifier:
 		:param order: see get_poly_inflection()
 		:return: Classification (0, 1, or 2)
 		"""
-		if self.get_overlap() < overlap_threshold:
-			return 0
-		# Overlap > threshold, so we have sorption
-		if self.get_solv_peak(cwt_widths, trim) > self.get_poly_inflection(window, order):
+		if self.get_solv_area_in(window, order) > in_threshold:
+			# Sorbed solvent in brush > threshold, so we have absorption
+			return 2
+		if self.get_solv_area_out(window, order) > out_threshold:
+			# Sorbed solvent in brush > threshold, so we have adsorption
 			return 1
-		# Solvent peak is right of the polymer inflection point, so we have adsorption
-		return 2
+		return 0
