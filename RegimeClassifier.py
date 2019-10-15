@@ -99,16 +99,16 @@ class RegimeClassifier:
 		"""
 		return np.trapz(self.solv_ta[self.get_poly_inflection(window, order):, 2])
 
-	def get_classification(self, in_threshold = 15, out_threshold = 4, window: int = SG_WINDOW, order: int = SG_ORDER) -> int:
+	def get_classification(self, in_threshold: int = 15, out_threshold: int = 4, window: int = SG_WINDOW,
+	                       order: int = SG_ORDER) -> int:
 		"""
-		Get the regime classification the system is in, determined by the combination of the overlap integral and
-		location of the solvent peak with respect to the polymer surface (inflection point in the density profile)
-		:param overlap_threshold: Threshold for the overlap integral below which the system is considered to have "no sorption"
-		:param cwt_widths: see get_solv_peak()
-		:param trim: Number of indices to trim from the beginning (left part) of the solvent profile.
+		Get the regime classification the system is in, determined by the amount of integrated adsorbed and adsorbed
+		solvent.
+		:param in_threshold: Threshold for absorbed solvent above which system will be classified as 2
+		:param out_threshold: Threshold for adsorbed solvent above which system will be classified as 1
 		:param window: see get_poly_inflection()
 		:param order: see get_poly_inflection()
-		:return: Classification (0, 1, or 2)
+		:return: Integer corresponding to classification (0, 1, or 2)
 		"""
 		if self.get_solv_area_in(window, order) > in_threshold:
 			# Sorbed solvent in brush > threshold, so we have absorption
