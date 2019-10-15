@@ -20,17 +20,20 @@ class RegimeClassifier:
 	FILENAME_DENS_POLY = 'PolyDens.dat'
 	FILENAME_DENS_SOLV = 'SolvDens.dat'
 
+	TA_TRIM = 20
+
 	CWT_WIDTHS = range(1, 15)
 	SG_WINDOW = 21
 	SG_ORDER = 2
 	SOLV_TRIM = 12
 
 	def __init__(self, directory: str, filename_poly: str = FILENAME_DENS_POLY,
-	             filename_solvent: str = FILENAME_DENS_SOLV):
+	             filename_solvent: str = FILENAME_DENS_SOLV, ta_trim: int = TA_TRIM):
 		"""
 		:param directory: String containing the path to the base directory containing the files.
 		:param filename_poly: String containing the filename of the polymer density file.
 		:param filename_solvent: String containing the filename of the solvent density file.
+		:param ta_trim: Number of temporal chunks (profiles) to discard at the beginning
 		"""
 		self.directory: str = directory
 		bdp = BrushDensityParser()
@@ -38,9 +41,12 @@ class RegimeClassifier:
 		dens_poly = bdp.load_density(directory + '/' + filename_poly)
 		dens_solv = bdp.load_density(directory + '/' + filename_solvent)
 
+		# Slice for trimming unequilibrated first temporal chunks from time average
+		s = np.s_[ta_trim:, :, :]
+
 		# time-averaged profiles
-		self.poly_ta: np.ndarray = np.mean(dens_poly, axis=0)
-		self.solv_ta: np.ndarray = np.mean(dens_solv, axis=0)
+		self.poly_ta: np.ndarray = np.mean(dens_poly[s], axis=0)
+		self.solv_ta: np.ndarray = np.mean(dens_solv[s], axis=0)
 
 	def get_overlap(self) -> np.ScalarType:
 		"""
