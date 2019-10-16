@@ -2,10 +2,11 @@
 Exports the RegimeClassifier class.
 """
 
-from typing import Sequence
+from typing import Sequence, Tuple
 
 import numpy as np
 from scipy.signal import find_peaks_cwt, savgol_filter
+from scipy.stats import sem, t
 
 from BrushDensityParser import BrushDensityParser
 
@@ -19,13 +20,13 @@ class RegimeClassifier:
 	"""
 	FILENAME_DENS_POLY = 'PolyDens.dat'
 	FILENAME_DENS_SOLV = 'SolvDens.dat'
-
 	TA_TRIM = 20
 
 	CWT_WIDTHS = range(1, 15)
 	SG_WINDOW = 21
 	SG_ORDER = 2
 	SOLV_TRIM = 12
+	T_CONFIDENCE = 0.95
 
 	def __init__(self, directory: str, filename_poly: str = FILENAME_DENS_POLY,
 	             filename_solvent: str = FILENAME_DENS_SOLV, ta_trim: int = TA_TRIM):
@@ -48,16 +49,42 @@ class RegimeClassifier:
 		self.poly_ta: np.ndarray = np.mean(dens_poly[s], axis=0)
 		self.solv_ta: np.ndarray = np.mean(dens_solv[s], axis=0)
 
-	def get_overlap(self) -> np.ScalarType:
+		# And confidence intervals
+		self.poly_ci: np.ndarray = self._get_error(dens_poly[s][:, :, 2])
+		self.solv_ci: np.ndarray = self._get_error(dens_solv[s][:, :, 2])
+
+	@classmethod
+	def _get_ci(cls, data: np.ndarray, confidence: float = T_CONFIDENCE) -> Tuple[np.ndarray, np.ndarray]:
 		"""
-		Calculate the overlap integral between the polymer density and solvent density profiles. Returns value of the
-		area in units sigma^-2.
-		:return:
+		Calculates confidence intervals using a Student T-distribution with given confidence from an array of data.
+		:param data: Ndarray containing the sample data.
+		:param confidence: Confidence level
+		:return: Tuple of two ndarrays containing the (absolute) lower and upper confidence boundaries.
+		"""
+		# Number of samples
+		N = data.shape[0]
+
+		return t.interval(confidence, N - 1, loc=np.mean(data, axis=0), scale=sem(data, axis=0))
+
+	@classmethod
+	def _get_error(cls, data: np.ndarray, confidence: float = T_CONFIDENCE) -> np.ndarray:
+		"""
+		Calculates confidence intervals using _get_ci() and converts them to (symmetric) relative confidence levels.
+		:param data: Ndarray containing the sample data.
+		:param confidence: Confidence level
+		:return: Ndarray containing confidence level(s)
+		"""
+		return cls._get_ci(data, confidence)[1] - np.mean(data, axis=0)
+
+	def get_overlap(self) -> float:
+		"""
+		Calculate the overlap integral between the polymer density and solvent density profiles. Returns
+		:return: Value of the area in units sigma^-2.
 		"""
 		poly_ta_norm = self.poly_ta[:, 2] / self.poly_ta[:, 2].max()
 		return np.trapz(self.solv_ta[:, 2] * poly_ta_norm)
 
-	def get_poly_inflection(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> np.ScalarType:
+	def get_poly_inflection(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> int:
 		"""
 		Finds the inflection point of the polymer density profile by calculating the gradient using a Savitsky-Golay
 		filter and getting the index of the minimum element in that array.
@@ -85,19 +112,32 @@ class RegimeClassifier:
 		# Get highest peak
 		return peaks[self.solv_ta[peaks, 2].argmax()]
 
-	def get_solv_area_in(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> np.ScalarType:
+	def _get_area(self, profile_range: slice) -> Tuple[float, float]:
+		"""
+		Integrates the given slice of the solvent density profile
+		:param profile_range: (Spatial) slice of the density profile
+		:return: Tuple of (area, error) corresponding to the area and its respective confidence level
+		"""
+		area = np.trapz(self.solv_ta[profile_range][:, 2])
+		# Propagate error to numerical integral: geometric mean of error in the profile
+		error = np.nansum(self.solv_ci[profile_range] ** 2) ** (1 / 2)
+		return area, error
+
+	def get_solv_area_in(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> Tuple[float, float]:
 		"""
 		Calculate the integral of the solvent density profile inside the brush.
-		:return:
+		:return: Tuple of (area, error) corresponding to the area and its respective confidence level
 		"""
-		return np.trapz(self.solv_ta[:self.get_poly_inflection(window, order), 2])
+		profile_range = np.s_[:self.get_poly_inflection(window, order)]
+		return self._get_area(profile_range)
 
-	def get_solv_area_out(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> np.ScalarType:
+	def get_solv_area_out(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> Tuple[float, float]:
 		"""
 		Calculate the integral of the solvent density profile outside the brush.
-		:return:
+		:return: Tuple of (area, error) corresponding to the area and its respective confidence level
 		"""
-		return np.trapz(self.solv_ta[self.get_poly_inflection(window, order):, 2])
+		profile_range = np.s_[self.get_poly_inflection(window, order):]
+		return self._get_area(profile_range)
 
 	def get_classification(self, in_threshold: int = 15, out_threshold: int = 4, window: int = SG_WINDOW,
 	                       order: int = SG_ORDER) -> int:
@@ -110,10 +150,10 @@ class RegimeClassifier:
 		:param order: see get_poly_inflection()
 		:return: Integer corresponding to classification (0, 1, or 2)
 		"""
-		if self.get_solv_area_in(window, order) > in_threshold:
+		if self.get_solv_area_in(window, order)[0] > in_threshold:
 			# Sorbed solvent in brush > threshold, so we have absorption
 			return 2
-		if self.get_solv_area_out(window, order) > out_threshold:
+		if self.get_solv_area_out(window, order)[0] > out_threshold:
 			# Sorbed solvent in brush > threshold, so we have adsorption
 			return 1
 		return 0
