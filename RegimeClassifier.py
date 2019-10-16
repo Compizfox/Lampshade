@@ -5,7 +5,7 @@ Exports the RegimeClassifier class.
 from typing import Sequence, Tuple
 
 import numpy as np
-from scipy.signal import find_peaks_cwt, savgol_filter
+from scipy.signal import savgol_filter
 from scipy.stats import sem, t
 
 from BrushDensityParser import BrushDensityParser
@@ -22,10 +22,8 @@ class RegimeClassifier:
 	FILENAME_DENS_SOLV = 'SolvDens.dat'
 	TA_TRIM = 20
 
-	CWT_WIDTHS = range(1, 15)
 	SG_WINDOW = 21
 	SG_ORDER = 2
-	SOLV_TRIM = 12
 	T_CONFIDENCE = 0.95
 
 	def __init__(self, directory: str, filename_poly: str = FILENAME_DENS_POLY,
@@ -76,14 +74,6 @@ class RegimeClassifier:
 		"""
 		return cls._get_ci(data, confidence)[1] - np.mean(data, axis=0)
 
-	def get_overlap(self) -> float:
-		"""
-		Calculate the overlap integral between the polymer density and solvent density profiles. Returns
-		:return: Value of the area in units sigma^-2.
-		"""
-		poly_ta_norm = self.poly_ta[:, 2] / self.poly_ta[:, 2].max()
-		return np.trapz(self.solv_ta[:, 2] * poly_ta_norm)
-
 	def get_poly_inflection(self, window: int = SG_WINDOW, order: int = SG_ORDER) -> int:
 		"""
 		Finds the inflection point of the polymer density profile by calculating the gradient using a Savitsky-Golay
@@ -96,21 +86,6 @@ class RegimeClassifier:
 		poly_ta_smoothed = savgol_filter(self.poly_ta[:, 2], window, order, deriv=1)
 		# Inflection point is minimum of first derivative
 		return poly_ta_smoothed.argmin()
-
-	def get_solv_peak(self, cwt_widths: Sequence = CWT_WIDTHS, trim: int = SOLV_TRIM) -> np.ScalarType:
-		"""
-		Finds the peak in the solvent density profile with the help of a continuous wavelet transform smoothing.
-		:param cwt_widths: Array with widths that are used for the wavelets that the data is convolved with.
-		                   Make smallest value smaller for more precise peak localisation, make largest value larger
-		                   for more smoothing.
-		:param trim: Number of indices to trim from the beginning (left part) of the solvent profile.
-		:return: Index of the peak
-		"""
-		# Find peaks of the solvent profile
-		peaks = find_peaks_cwt(self.solv_ta[trim:, 2], cwt_widths) + trim
-
-		# Get highest peak
-		return peaks[self.solv_ta[peaks, 2].argmax()]
 
 	def _get_area(self, profile_range: slice) -> Tuple[float, float]:
 		"""
