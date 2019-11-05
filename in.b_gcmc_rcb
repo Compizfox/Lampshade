@@ -4,7 +4,7 @@ unfix allnvt
 variable Nvap equal count(solvent)
 
 fix reflect solvent wall/reflect zhi EDGE units box
-fix mc solvent gcmc 10000 500 0 5 12843 0.85 0 1.0 region solvent group solvent ${pmu}
+fix mc solvent gcmc 10000 500 0 5 12843 0.85 0 -3.5 region solvent group solvent
 
 compute vaptemp solvent temp
 compute_modify vaptemp dynamic/dof yes
