@@ -12,47 +12,33 @@ class Simulation:
 	"""
 	Run a vapour hydrated brush simulation in a standard manner. Wraps LAMMPS.
 	"""
-	def __init__(self, command: str, run: int, dry_run: bool = False, prefix: str = ""):
+	def __init__(self, command: str, dry_run: bool = False, prefix: str = ""):
 		"""
 		:param str  command: Command to run to call LAMMPS.
-		:param int  run:     Number of timesteps to simulate for.
 		:param bool dry_run: Doesn't do anything productive if true.
 		:param str  prefix:  String to prepend to all print() output.
 		"""
 		self.command = command
-		self.run = run
 		self.dry_run = dry_run
 		self.prefix = prefix
 
-	def sample_coord(self, epp: float, eps: float, vars: dict = {}) -> None:
+	def sample_coord(self, vars: dict = {}) -> None:
 		"""
 		Simulate a system with the given parameters
-		:param float epp:  Self-interation of polymer
-		:param float eps:  Interaction of polymer with solvent
-		:param dict  vars: Dictionary describing LAMPMS equal-style variables to set
+		:param dict vars: Dictionary describing LAMPMS equal-style variables to set
 		"""
 		# Build LAMMPS input script
 		buf = StringIO()
-		buf.write('variable epp equal {:.2f}\n'.format(epp))
-		buf.write('variable eps equal {:.2f}\n'.format(eps))
 
 		# Set variables
 		for key, value in vars.items():
 			buf.write('variable {} equal {}\n'.format(key, value))
 
-		# 'header' of equilibration input file
-		with open('in.b_equi_header') as f:
-			buf.write(f.read())
-		# Equilibration
-		with open('in.b_equi_run') as f:
-			buf.write(f.read())
 		# GCMC run
-		with open('in.b_gcmc_rcb') as f:
+		with open('gcmc.in') as f:
 			buf.write(f.read())
-		buf.write('run {}\n'.format(self.run))
-		buf.write('write_data data.gcmc\n')
 
-		subdir = 'grid_{:.2f}_{:.2f}'.format(epp, eps) + ''.join(['_{}{:.4f}'.format(k, v) for k, v in vars.items()])
+		subdir = 'grid_' + ''.join(['_{}{:.4f}'.format(k, v) for k, v in vars.items()])
 		self.run_in_subdir(buf.getvalue(), subdir)
 
 	def run_in_subdir(self, input_script: str, subdir: str) -> None:
@@ -73,3 +59,15 @@ class Simulation:
 				print("{} {}: Finished {}.".format(self.prefix, datetime.now(), subdir))
 		else:
 			print("{} {}: Found existing subdir {}. Skipping.".format(self.prefix, datetime.now(), subdir))
+
+	def run_equi(self, vars: dict = {}):
+		"""
+		Run equilibration 
+		:param dict vars: Dictionary describing LAMPMS equal-style variables to set
+		"""
+		print("{}: Equilibrating...".format(datetime.now()))
+		if not self.dry_run:
+			with open('log.equi', 'w') as f:
+				run(self.command + ' -in equi.in ' + ''.join(['-var {} {} '.format(k, v) for k, v in vars.items()]),
+				    universal_newlines=True, stdout=f, shell=True)
+			print("{}: Finished equilibration.".format(datetime.now()))
