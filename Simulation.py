@@ -46,7 +46,7 @@ class Simulation:
 			if not self.dry_run:
 				mkdir(subdir)
 				chdir(subdir)
-				self._run_with_vars('gcmc.in', 'gcmc.log', vars)
+				self._run_with_vars('../gcmc.in', 'gcmc.log', vars)
 				chdir('../')
 				print("{} {}: Finished {}.".format(self.prefix, datetime.now(), subdir))
 		else:
