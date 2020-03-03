@@ -118,7 +118,7 @@ if __name__ == '__main__':
 		if var not in config['gcmc_vars'] and var not in args.variable.keys():
 			raise RuntimeError("Missing value for GCMC variable '{}'".format(var))
 
-	# Create Cartesian product of parameters. Returns list of tuples (*vars)
+	# Create Cartesian product of dynamic var values. Returns flat list of tuples (*vars)
 	dyn_vars_list = list(product(*args.variable.values()))
 
 	print("Got {} jobs, distributed over {} workers:".format(len(dyn_vars_list), cpu_count))
