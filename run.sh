@@ -10,4 +10,4 @@
 module load 2019
 module load Python/3.7.5-foss-2018b
 
-srun python3 run_sbatch.py
+python3 run_sbatch.py
