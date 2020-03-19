@@ -39,7 +39,7 @@ def start_sim(*vars_values: float) -> None:
 	# Reconstruct dynamic vars dict
 	dyn_vars = dict(zip(args.variable.keys(), vars_values))
 
-	sim = Simulation(args.lammps_command, args.dry_run, current_process().name)
+	sim = Simulation(args.lammps_command, args.dry_run, True, current_process().name)
 	sim.run_gcmc(static_vars, dyn_vars)
 
 
