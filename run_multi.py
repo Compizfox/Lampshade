@@ -100,7 +100,7 @@ if __name__ == '__main__':
 	mpi_arguments = config['lammps'].get('MPI_arguments', '')
 
 	# Run equilibration if equilibrated data file is not found
-	if not path.isfile('data.equi'):
+	if not path.isfile('data.equi.gz'):
 		# Gather equi vars from config
 		equi_vars = dict(config.items('equi_vars'))
 
