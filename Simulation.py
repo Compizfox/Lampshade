@@ -9,7 +9,9 @@ from datetime import datetime
 
 class Simulation:
 	"""
-	Run a vapour hydrated brush simulation in a standard manner. Wraps LAMMPS.
+	Run a vapour hydrated brush simulation in a standard manner. Handles creating subdirectories and cd'ing in and
+	back out, passes equal-style variables.
+	Wraps LAMMPS.
 	"""
 
 	def __init__(self, command: str, dry_run: bool = False, verbose: bool = False, prefix: str = ""):
@@ -31,7 +33,8 @@ class Simulation:
 		:param dict vars:          Dictionary describing LAMMPS equal-style variables to set
 		"""
 		with open(log_filename, 'w') as f:
-			cmd = self.command + ' -in {} '.format(input_filename) + ''.join(['-var {} {} '.format(k, v) for k, v in vars.items()])
+			cmd = self.command + ' -in {} '.format(input_filename) + ''.join(
+				['-var {} {} '.format(k, v) for k, v in vars.items()])
 			if self.verbose:
 				print(cmd)
 			run(cmd, universal_newlines=True, stdout=f, shell=True)
