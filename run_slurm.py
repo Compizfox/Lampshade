@@ -50,6 +50,4 @@ class SlurmJob(Job):
 			             f"Dynamic vars: {dyn_vars}\n")
 
 
-logging.basicConfig(level=logging.INFO, handlers=[logging.FileHandler("wrapper.log"), logging.StreamHandler()])
-
 job = SlurmJob(description=__doc__)

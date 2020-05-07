@@ -37,6 +37,10 @@ class Job(ABC):
 			raise RuntimeError("Subdir '{}' does not exist.".format(self.args.subdir))
 		chdir(self.args.subdir)
 
+		# Setup logging
+		logging.basicConfig(level=logging.INFO, handlers=[logging.FileHandler("wrapper.log"), logging.StreamHandler()])
+
+		# Setup parser
 		config = configparser.ConfigParser(converters={'list': lambda s: s.split(' ')})
 		config.optionxform = str  # Use case-sensitive keys
 		config.read('settings.ini')
