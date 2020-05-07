@@ -42,9 +42,11 @@ class SlurmJob(Job):
 			jobscript += f"/usr/bin/env python3 ../run_simulation.py '{json.dumps(lammps_command)}' " \
 			             f"'{json.dumps(self.args.dry_run)}' '{json.dumps(self.static_vars)}' '{json.dumps(dyn_vars)}'"
 
-			run(self.config['job']['slurm_sbatch_args'], input=jobscript, universal_newlines=True, shell=True)
+			slurm_sbatch_cmd = self.config['job']['slurm_sbatch_args']
 
-			logging.info(f"Submitted SLURM job:\n"
+			run(slurm_sbatch_cmd, input=jobscript, universal_newlines=True, shell=True)
+
+			logging.info(f"Submitted SLURM job with {slurm_sbatch_cmd}:\n"
 			             f"LAMMPS command: {lammps_command}\n"
 			             f"Static vars: {self.static_vars}\n"
 			             f"Dynamic vars: {dyn_vars}\n")
