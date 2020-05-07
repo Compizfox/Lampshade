@@ -25,13 +25,16 @@ class Simulation:
 		self.verbose = verbose
 		self.prefix = prefix
 
-	def _run_with_vars(self, input_filename: str, log_filename: str, vars: dict = {}) -> None:
+	def _run_with_vars(self, input_filename: str, log_filename: str, vars: dict = None) -> None:
 		"""
 		Run a LAMMPS simulation in a subprocess with variables.
 		:param str input_filename: Filename of the LAMMPS input file
 		:param str log_filename:   Filename of the log file to write to
 		:param dict vars:          Dictionary describing LAMMPS equal-style variables to set
 		"""
+		if vars is None:
+			vars = {}
+
 		with open(log_filename, 'w') as f:
 			cmd = self.command + ' -in {} '.format(input_filename) + ''.join(
 				['-var {} {} '.format(k, v) for k, v in vars.items()])
@@ -39,12 +42,15 @@ class Simulation:
 				print(cmd)
 			run(cmd, universal_newlines=True, stdout=f, shell=True)
 
-	def _run_in_subdir(self, subdir: str, vars: dict = {}) -> None:
+	def _run_in_subdir(self, subdir: str, vars: dict = None) -> None:
 		"""
 		Run a simulation in a subdirectory.
 		:param str subdir: Subdirectory to run the simulation in
 		:param dict vars:  Dictionary describing LAMMPS equal-style variables to set
 		"""
+		if vars is None:
+			vars = {}
+
 		# Create a subdirectory for every simulation. Skip simulation entirely if dir already exists
 		if not path.isdir(subdir):
 			print("{} {}: Simulating {}...".format(self.prefix, datetime.now(), subdir))
@@ -57,11 +63,17 @@ class Simulation:
 		else:
 			print("{} {}: Found existing subdir {}. Skipping.".format(self.prefix, datetime.now(), subdir))
 
-	def run_gcmc(self, static_vars: dict = {}, dyn_vars: dict = {}) -> None:
+	def run_gcmc(self, static_vars: dict = None, dyn_vars: dict = None) -> None:
 		"""
 		Simulate a system with the given parameters.
-		:param dict vars: Dictionary describing LAMMPS equal-style variables to set
+		:param dict dyn_vars:    Dictionary describing static variables
+		:param dict static_vars: Dictionary describing static variables
 		"""
+		if static_vars is None:
+			static_vars = {}
+		if dyn_vars is None:
+			dyn_vars = {}
+
 		subdir = 'grid' + ''.join(['_{}{:.4f}'.format(k, float(v)) for k, v in dyn_vars.items()])
 
 		# Combine vars dicts
@@ -69,11 +81,14 @@ class Simulation:
 
 		self._run_in_subdir(subdir, static_vars)
 
-	def run_equi(self, vars: dict = {}) -> None:
+	def run_equi(self, vars: dict = None) -> None:
 		"""
 		Run equilibration.
 		:param dict vars: Dictionary describing LAMMPS equal-style variables to set
 		"""
+		if vars is None:
+			vars = {}
+
 		print("{}: Equilibrating...".format(datetime.now()))
 		if not self.dry_run:
 			self._run_with_vars('equi.in', 'equi.log', vars)
