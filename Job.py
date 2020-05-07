@@ -43,6 +43,10 @@ class Job(ABC):
 		# Setup parser
 		config = configparser.ConfigParser(converters={'list': lambda s: s.split(' ')})
 		config.optionxform = str  # Use case-sensitive keys
+
+		# Assert that settings file exist and parse it
+		if not path.isfile('settings.ini'):
+			raise RuntimeError("settings.ini does not exist in specified subdir {}".format(self.args.subdir))
 		config.read('settings.ini')
 		self.config = config
 
