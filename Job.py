@@ -8,7 +8,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import product
-from os import path
+from os import path, chdir
 from platform import uname
 from typing import Sequence, Tuple
 
@@ -29,9 +29,14 @@ class Job(ABC):
 		# Create dict of lists from argument string where several variables are separated by spaces, variable names and
 		# their values are separated by =, and values are a comma-separated list
 		parser.add_argument("--dry-run", action="store_true", help="Don't actually do anything productive.")
+		parser.add_argument("subdir", help="Subdir to use for this job")
 		self.args = parser.parse_args()
 
-		# Parse ini file
+		# Assert that subdir exists and chdir in it
+		if not path.isdir(self.args.subdir):
+			raise RuntimeError("Subdir '{}' does not exist.".format(self.args.subdir))
+		chdir(self.args.subdir)
+
 		config = configparser.ConfigParser(converters={'list': lambda s: s.split(' ')})
 		config.optionxform = str  # Use case-sensitive keys
 		config.read('settings.ini')
