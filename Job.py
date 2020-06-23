@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import product
 from os import path, chdir
-from platform import uname
 from typing import Sequence, Tuple
 
 
@@ -67,7 +66,6 @@ class Job(ABC):
 		dyn_values_list = list(product(*self.gcmc_dyn_vars.values()))
 
 		logging.info(datetime.now())
-		logging.info(' '.join(uname()))
 		logging.info("Got {} simulations".format(len(dyn_values_list)))
 
 		self._spawn_simulations(dyn_values_list)

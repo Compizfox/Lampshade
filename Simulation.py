@@ -2,9 +2,10 @@
 Exports the Simulation class.
 """
 
-from os import mkdir, chdir, path
-from subprocess import run
 from datetime import datetime
+from os import chdir, mkdir, path
+from platform import uname
+from subprocess import run
 
 
 class Simulation:
@@ -39,7 +40,7 @@ class Simulation:
 			cmd = self.command + ' -in {} '.format(input_filename) + ''.join(
 				['-var {} {} '.format(k, v) for k, v in vars.items()])
 			if self.verbose:
-				print(cmd)
+				print("{} {}: Spawning LAMMPS:\n".format(self.prefix, datetime.now()) + cmd)
 			run(cmd, universal_newlines=True, stdout=f, shell=True)
 
 	def _run_in_subdir(self, subdir: str, vars: dict = None) -> None:
@@ -66,13 +67,16 @@ class Simulation:
 	def run_gcmc(self, static_vars: dict = None, dyn_vars: dict = None) -> None:
 		"""
 		Simulate a system with the given parameters.
-		:param dict dyn_vars:    Dictionary describing static variables
 		:param dict static_vars: Dictionary describing static variables
+		:param dict dyn_vars:    Dictionary describing dynamic variables
 		"""
 		if static_vars is None:
 			static_vars = {}
 		if dyn_vars is None:
 			dyn_vars = {}
+
+		if self.verbose:
+			print(" ".join(uname()))
 
 		subdir = 'grid' + ''.join(['_{}{:.4f}'.format(k, float(v)) for k, v in dyn_vars.items()])
 
