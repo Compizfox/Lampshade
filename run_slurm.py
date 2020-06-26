@@ -30,24 +30,16 @@ class SlurmJob(Job):
 			# Reconstruct dynamic vars dict
 			dyn_vars = dict(zip(self.gcmc_dyn_vars.keys(), dyn_values))
 
-			lammps_command = ' '.join([
-				self.config['lammps'].get('MPI_path'),
-				self.config['lammps'].get('MPI_arguments', ''),
-				self.config['lammps']['LAMMPS_path'],
-				self.config['lammps'].get('LAMMPS_arguments', '')
-			])
-
 			# Build jobscript
 			jobscript = "#!/bin/sh\n\n"
-			jobscript += f"/usr/bin/env python3 ../run_simulation.py '{json.dumps(lammps_command)}' " \
+			jobscript += f"/usr/bin/env python3 ../run_simulation.py '{json.dumps(self.lammps_command)}' " \
+			             f"'{json.dumps(self.input_file)}' '{json.dumps(self.log_file)}' " \
 			             f"'{json.dumps(self.args.dry_run)}' '{json.dumps(self.static_vars)}' '{json.dumps(dyn_vars)}'"
 
-			slurm_sbatch_cmd = self.config['job']['slurm_sbatch_args']
+			run(self.slurm_sbatch_cmd, input=jobscript, universal_newlines=True, shell=True)
 
-			run(slurm_sbatch_cmd, input=jobscript, universal_newlines=True, shell=True)
-
-			logging.info(f"Submitted SLURM job with {slurm_sbatch_cmd}:\n"
-			             f"LAMMPS command: {lammps_command}\n"
+			logging.info(f"Submitted SLURM job with {self.slurm_sbatch_cmd}:\n"
+			             f"LAMMPS command: {self.lammps_command}\n"
 			             f"Static vars: {self.static_vars}\n"
 			             f"Dynamic vars: {dyn_vars}\n")
 

@@ -47,11 +47,16 @@ class Job(ABC):
 		if not path.isfile('settings.ini'):
 			raise RuntimeError("settings.ini does not exist in specified subdir {}".format(self.args.subdir))
 		config.read('settings.ini')
-		self.config = config
+
+		# Assert that input file exists
+		input_file = config['job']['input_file']
+		if not path.isfile(input_file):
+			raise RuntimeError("Missing input file: {}".format(input_file))
 
 		# Assert that data file exists
-		if not path.isfile(config['gcmc_vars']['equi_data']):
-			raise RuntimeError("Missing equilibrated data file.")
+		data_file = config['gcmc_vars']['equi_data']
+		if not path.isfile(data_file):
+			raise RuntimeError("Missing equilibrated data file: {}".format(data_file))
 
 		# Assert all required gcmc vars are accounted for
 		for var in config.getlist('job', 'required_gcmc_vars'):
@@ -61,6 +66,15 @@ class Job(ABC):
 		self.static_vars = dict(config['gcmc_vars'])
 		# Get dict of dynamic vars
 		self.gcmc_dyn_vars = {var: config.getlist('gcmc_dyn_vars', var) for var in config['gcmc_dyn_vars']}
+		self.lammps_command = ' '.join([
+			config['lammps'].get('MPI_path'),
+			config['lammps'].get('MPI_arguments', ''),
+			config['lammps']['LAMMPS_path'],
+			config['lammps'].get('LAMMPS_arguments', '')
+		])
+		self.slurm_sbatch_cmd = config['job']['slurm_sbatch_args']
+		self.input_file = input_file
+		self.log_file = config['job']['log_file']
 
 		# Create Cartesian product of dynamic var values. Returns flat list of tuples (*vars)
 		dyn_values_list = list(product(*self.gcmc_dyn_vars.values()))

@@ -15,42 +15,45 @@ class Simulation:
 	Wraps LAMMPS.
 	"""
 
-	def __init__(self, command: str, dry_run: bool = False, verbose: bool = False, prefix: str = ""):
+	def __init__(self, command: str, input_filename: str, log_filename: str, dry_run: bool = False,
+	             verbose: bool = False, prefix: str = ""):
 		"""
 		:param str  command: Command to run to call LAMMPS.
+		:param str  input_filename: Filename of the LAMMPS input file
+		:param str  log_filename:   Filename of the log file to write to
 		:param bool dry_run: Doesn't do anything productive if true.
 		:param str  prefix:  String to prepend to all print() output.
 		"""
 		self.command = command
 		self.dry_run = dry_run
+		self.input_filename = input_filename
+		self.log_filename = log_filename
 		self.verbose = verbose
 		self.prefix = prefix
 
-	def _run_with_vars(self, input_filename: str, log_filename: str, vars: dict = None) -> None:
+	def _run_with_vars(self, lmp_vars: dict = None) -> None:
 		"""
 		Run a LAMMPS simulation in a subprocess with variables.
-		:param str input_filename: Filename of the LAMMPS input file
-		:param str log_filename:   Filename of the log file to write to
-		:param dict vars:          Dictionary describing LAMMPS equal-style variables to set
+		:param dict lmp_vars: Dictionary describing LAMMPS equal-style variables to set
 		"""
-		if vars is None:
-			vars = {}
+		if lmp_vars is None:
+			lmp_vars = {}
 
-		with open(log_filename, 'w') as f:
-			cmd = self.command + ' -in {} '.format(input_filename) + ''.join(
-				['-var {} {} '.format(k, v) for k, v in vars.items()])
+		with open(self.log_filename, 'w') as f:
+			cmd = self.command + ' -in {} '.format(self.input_filename) + ''.join(
+				['-var {} {} '.format(k, v) for k, v in lmp_vars.items()])
 			if self.verbose:
 				print("{} {}: Spawning LAMMPS:\n".format(self.prefix, datetime.now()) + cmd)
 			run(cmd, universal_newlines=True, stdout=f, shell=True)
 
-	def _run_in_subdir(self, subdir: str, vars: dict = None) -> None:
+	def _run_in_subdir(self, subdir: str, lmp_vars: dict = None) -> None:
 		"""
 		Run a simulation in a subdirectory.
-		:param str subdir: Subdirectory to run the simulation in
-		:param dict vars:  Dictionary describing LAMMPS equal-style variables to set
+		:param str subdir:    Name of the subdirectory to run the simulation in
+		:param dict lmp_vars: Dictionary describing LAMMPS equal-style variables to set
 		"""
-		if vars is None:
-			vars = {}
+		if lmp_vars is None:
+			lmp_vars = {}
 
 		# Create a subdirectory for every simulation. Skip simulation entirely if dir already exists
 		if not path.isdir(subdir):
@@ -58,7 +61,7 @@ class Simulation:
 			if not self.dry_run:
 				mkdir(subdir)
 				chdir(subdir)
-				self._run_with_vars('../../gcmc.in', 'gcmc.log', vars)
+				self._run_with_vars(lmp_vars)
 				chdir('../')
 				print("{} {}: Finished {}.".format(self.prefix, datetime.now(), subdir))
 		else:
@@ -84,16 +87,3 @@ class Simulation:
 		static_vars.update(dyn_vars)
 
 		self._run_in_subdir(subdir, static_vars)
-
-	def run_equi(self, vars: dict = None) -> None:
-		"""
-		Run equilibration.
-		:param dict vars: Dictionary describing LAMMPS equal-style variables to set
-		"""
-		if vars is None:
-			vars = {}
-
-		print("{}: Equilibrating...".format(datetime.now()))
-		if not self.dry_run:
-			self._run_with_vars('equi.in', 'equi.log', vars)
-			print("{}: Finished equilibration.".format(datetime.now()))
