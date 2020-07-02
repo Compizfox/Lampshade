@@ -31,16 +31,17 @@ class Simulation:
 		self.verbose = verbose
 		self.prefix = prefix
 
-	def _run_with_vars(self, lmp_vars: dict = None) -> None:
+	def _run_with_vars(self, input_filename: str, lmp_vars: dict = None) -> None:
 		"""
 		Run a LAMMPS simulation in a subprocess with variables.
+		:param str  input_filename: Filename of the LAMMPS input file
 		:param dict lmp_vars: Dictionary describing LAMMPS equal-style variables to set
 		"""
 		if lmp_vars is None:
 			lmp_vars = {}
 
 		with open(self.log_filename, 'w') as f:
-			cmd = self.command + ' -in {} '.format(self.input_filename) + ''.join(
+			cmd = self.command + ' -in {} '.format(input_filename) + ''.join(
 				['-var {} {} '.format(k, v) for k, v in lmp_vars.items()])
 			if self.verbose:
 				print("{} {}: Spawning LAMMPS:\n".format(self.prefix, datetime.now()) + cmd)
@@ -61,7 +62,12 @@ class Simulation:
 			if not self.dry_run:
 				mkdir(subdir)
 				chdir(subdir)
-				self._run_with_vars(lmp_vars)
+
+				# Modify paths to files in parent directories
+				lmp_vars['equi_data'] = '../' + lmp_vars['equi_data']
+				input_filename = '../' + self.input_filename
+
+				self._run_with_vars(input_filename, lmp_vars)
 				chdir('../')
 				print("{} {}: Finished {}.".format(self.prefix, datetime.now(), subdir))
 		else:

@@ -49,7 +49,7 @@ class Job(ABC):
 		config.read('settings.ini')
 
 		# Assert that input file exists
-		input_file = config['job']['input_file']
+		input_file = '../' + config['job']['input_file']
 		if not path.isfile(input_file):
 			raise RuntimeError("Missing input file: {}".format(input_file))
 
