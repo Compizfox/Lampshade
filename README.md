@@ -73,22 +73,22 @@ The wrapper automatically creates subdirectories inside the job directory for ev
 simulation is placed in these subdirectories.
 
 ## Developer documentation
-`Job` defines a abstract class for a job (a range of simulations with some specified parameters), including the argument
-and setting parser. Simulations are spawned by calling the abstract method `_spawn_simulations()`.
+`Job` defines an abstract class for a job (a range of simulations with some specified parameters), including the
+argument and setting parser. Simulations are spawned by calling the abstract method `_spawn_simulations()`.
 
-In the current version, the only simulation spawn engine is `SlurmJob` (`run_slurm.py`) which targets SLURM, but it is
-possible to e.g. run simulations interactively in serial or in parallel using multiprocessing by extending `Job` and
-implementing `_spawn_simulations()` as appropriate.
+In the current version, the only simulation spawn engine is `SlurmJob` (`run_slurm.py`) which submits SLURM jobs, but it
+is possible to e.g. run simulations interactively in serial, or in parallel using multiprocessing, by extending `Job`
+and implementing `_spawn_simulations()` as appropriate.
 
-`SlurmJob` writes an 'ephemeral' SLURM jobscript and pipes it to sbatch (as defined by `slurm_sbatch_args` in
-`settings.ini`). The jobscript (which runs on the compute node at runtime) contains a call to `run_simulation.py` with
-various required variables dumped JSON-encoded as arguments.
+`SlurmJob` generates an 'ephemeral' (not saved anywhere) SLURM jobscript and pipes it to sbatch (with options as defined
+by `slurm_sbatch_args` in `settings.ini`). The jobscript contains a call to `run_simulation.py` with
+various required JSON-serialized variables as arguments.
 
-`run_simulation.py` then JSON-decodes these variables from `argv`, instantiates a `Simulation` and calls `run_gcmc()` on
-it to start the simulation.
+`run_simulation.py` (which runs on the compute node at runtime) then JSON-deserializes these variables from `argv`,
+instantiates a `Simulation` and calls `run_gcmc()` on it to start the simulation.
 
 A `Simulation` creates a subdirectory and runs LAMMPS in a subprocess with the applicable variables.
 
-Shown below is a diagram illustration the execution flow:
+Shown below is a diagram illustrating the execution flow:
 
 ![Flow diagram](diagram.svg)
