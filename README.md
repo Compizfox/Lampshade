@@ -1,4 +1,9 @@
 # SPiVHB
+![GitHub license](https://img.shields.io/github/license/Compizfox/SPiVHB)
+![Python version](https://img.shields.io/badge/Python-%3E3.6-orange)
+![GitHub last commit](https://img.shields.io/github/last-commit/Compizfox/SPiVHB)
+[![DOI](https://zenodo.org/badge/196189551.svg)](https://zenodo.org/badge/latestdoi/196189551)
+
 SPiVHB contains the input scripts and a Python wrapper around LAMMPS for more convenient execution of MD simulations
 of polymer brushes in equilibrium of solvent vapours.
  
