@@ -13,6 +13,21 @@ simulations for all (combinations of) parameters in a standard way, in a serial 
 
 The name comes from the working title of the project: "Solvent Partitioning in Vapour-Hydrated Brushes".
 
+## Motivation
+SPiVHB was developed with the idea that the LAMMPS input file for a system should not be modified for running the system
+with different parameters. Instead, these parameters can be fed to LAMMPS using variables. However, the list of
+variables often grows long, and feeding them as CLI arguments becomes tiresome. Moreover, oftentimes one wants to run a
+'parameter sweep' consisting of a range of simulations with different (combinations) of some of these parameters.
+
+SPiVHB streamlines this by:
+
+- Allowing the user to configure these parameters in a `settings.ini` file
+- Handling creating of subdirectories for each simulation, containing all relevant info
+- Spawning a simulation for every combination of parameters in a sweep
+
+Using SPiVHB, a large parameter sweep can be started using just one command, with the wrapper handling submission of
+SLURM jobs and subdirectory creation, keeping a clean and organised directory structure.
+
 ## Installation
 Simply clone the repository using Git:
 
@@ -22,6 +37,7 @@ foo@bar:~$ git clone https://github.com/Compizfox/SPiVHB.git
 
 or download a release and extract it. The Git approach has the advantage that updating is as easy as `git pull`.
 
+### Dependencies
 SPiVHB requires at least Python 3.6. No further setup is needed (apart from the usual LAMMPS setup, obviously); SPiVHB
 does not depend on any Python libraries outside the Standard Library.
 
@@ -97,3 +113,6 @@ A `Simulation` creates a subdirectory and runs LAMMPS in a subprocess with the a
 Shown below is a diagram illustrating the execution flow:
 
 ![Flow diagram](diagram.svg)
+
+## License
+This project is free software licensed under the GPL. See [LICENSE](LICENSE) for details.
