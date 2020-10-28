@@ -54,18 +54,18 @@ class Job(ABC):
 			raise RuntimeError("Missing input file: {}".format(input_file))
 
 		# Assert that data file exists
-		data_file = config['gcmc_vars']['equi_data']
+		data_file = config['static_vars']['initial_data_file']
 		if not path.isfile(data_file):
-			raise RuntimeError("Missing equilibrated data file: {}".format(data_file))
+			raise RuntimeError("Missing initial data file: {}".format(data_file))
 
-		# Assert all required gcmc vars are accounted for
-		for var in config.getlist('job', 'required_gcmc_vars'):
-			if var not in config['gcmc_vars'] and var not in config['gcmc_dyn_vars']:
-				raise RuntimeError("Missing value for GCMC variable '{}'".format(var))
+		# Assert all required vars are accounted for
+		for var in config.getlist('job', 'required_vars'):
+			if var not in config['static_vars'] and var not in config['dyn_vars']:
+				raise RuntimeError("Missing value for variable '{}'".format(var))
 
-		self.static_vars = dict(config['gcmc_vars'])
+		self.static_vars = dict(config['static_vars'])
 		# Get dict of dynamic vars
-		self.gcmc_dyn_vars = {var: config.getlist('gcmc_dyn_vars', var) for var in config['gcmc_dyn_vars']}
+		self.dyn_vars = {var: config.getlist('dyn_vars', var) for var in config['dyn_vars']}
 		self.lammps_command = ' '.join([
 			config['lammps'].get('MPI_path'),
 			config['lammps'].get('MPI_arguments', ''),
@@ -77,7 +77,7 @@ class Job(ABC):
 		self.log_file = config['job']['log_file']
 
 		# Create Cartesian product of dynamic var values. Returns flat list of tuples (*vars)
-		dyn_values_list = list(product(*self.gcmc_dyn_vars.values()))
+		dyn_values_list = list(product(*self.dyn_vars.values()))
 
 		logging.info(datetime.now())
 		logging.info("Got {} simulations".format(len(dyn_values_list)))

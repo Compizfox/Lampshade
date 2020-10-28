@@ -7,7 +7,7 @@ Simulations are submitted to SLURM using an ephemeral jobscript.
 
 Specify the sbatch command including arguments in settings.ini (slurm_sbatch_args)
 
-Variables for the simulation run must be set in settings.ini under [gcmc_vars] and [gcmc_dyn_vars]. The first
+Variables for the simulation run must be set in settings.ini under [static_vars] and [dyn_vars]. The first
 section contains static variables, whereas the latter can contain variables assigned an array of values which will be
 run in parallel.
 """
@@ -28,7 +28,7 @@ class SlurmJob(Job):
 	def _spawn_simulations(self, dyn_values_list: Sequence[Tuple]) -> None:
 		for dyn_values in dyn_values_list:
 			# Reconstruct dynamic vars dict
-			dyn_vars = dict(zip(self.gcmc_dyn_vars.keys(), dyn_values))
+			dyn_vars = dict(zip(self.dyn_vars.keys(), dyn_values))
 
 			# Build jobscript
 			jobscript = "#!/bin/sh\n\n"
