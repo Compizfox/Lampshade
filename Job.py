@@ -40,7 +40,7 @@ class Job(ABC):
 		logging.basicConfig(level=logging.INFO, handlers=[logging.FileHandler("wrapper.log"), logging.StreamHandler()])
 
 		# Setup parser
-		config = configparser.ConfigParser(converters={'list': lambda s: s.split(' ')})
+		config = configparser.ConfigParser(converters={'list': lambda s: s.split()})
 		config.optionxform = str  # Use case-sensitive keys
 
 		# Assert that settings file exist and parse it
@@ -59,6 +59,7 @@ class Job(ABC):
 			raise RuntimeError("Missing initial data file: {}".format(data_file))
 
 		# Assert all required vars are accounted for
+
 		for var in config.getlist('job', 'required_vars'):
 			if var not in config['static_vars'] and var not in config['dyn_vars']:
 				raise RuntimeError("Missing value for variable '{}'".format(var))
