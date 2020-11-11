@@ -29,6 +29,8 @@ class Job(ABC):
 		# their values are separated by =, and values are a comma-separated list
 		parser.add_argument("--dry-run", action="store_true", help="Don't actually do anything productive.")
 		parser.add_argument("subdir", help="Subdir to use for this job")
+		parser.add_argument("--skip-data-file-check", help="Skip checking for presence of the initial data file.",
+		                    action="store_true")
 		self.args = parser.parse_args()
 
 		# Assert that subdir exists and chdir in it
@@ -55,11 +57,10 @@ class Job(ABC):
 
 		# Assert that data file exists
 		data_file = config['static_vars']['initial_data_file']
-		if not path.isfile(data_file):
+		if not self.args.skip_data_file_check and not path.isfile(data_file):
 			raise RuntimeError("Missing initial data file: {}".format(data_file))
 
 		# Assert all required vars are accounted for
-
 		for var in config.getlist('job', 'required_vars'):
 			if var not in config['static_vars'] and var not in config['dyn_vars']:
 				raise RuntimeError("Missing value for variable '{}'".format(var))
