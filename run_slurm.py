@@ -14,7 +14,7 @@ run in parallel.
 
 import json
 import logging
-from subprocess import run
+from subprocess import run, PIPE, STDOUT
 from typing import Sequence, Tuple
 
 from Job import Job
@@ -36,12 +36,16 @@ class SlurmJob(Job):
 			             f"'{json.dumps(self.input_file)}' '{json.dumps(self.log_file)}' " \
 			             f"'{json.dumps(self.args.dry_run)}' '{json.dumps(self.static_vars)}' '{json.dumps(dyn_vars)}'"
 
-			run(self.slurm_sbatch_cmd, input=jobscript, universal_newlines=True, shell=True)
+			cp = run(self.slurm_sbatch_cmd, input=jobscript, universal_newlines=True, shell=True, stdout=PIPE,
+			         stderr=STDOUT)
 
-			logging.info(f"Submitted SLURM job with {self.slurm_sbatch_cmd}:\n"
-			             f"LAMMPS command: {self.lammps_command}\n"
-			             f"Static vars: {self.static_vars}\n"
-			             f"Dynamic vars: {dyn_vars}\n")
+			logging.info(cp.stdout)
+
+			if cp.returncode == 0:
+				logging.info(f"Successfully submitted SLURM job with {self.slurm_sbatch_cmd}:\n"
+				             f"LAMMPS command: {self.lammps_command}\n"
+				             f"Static vars: {self.static_vars}\n"
+				             f"Dynamic vars: {dyn_vars}\n")
 
 
 job = SlurmJob(description=__doc__)
