@@ -25,8 +25,6 @@ class Job(ABC):
 		# Parse CLI arguments
 		parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-		# Create dict of lists from argument string where several variables are separated by spaces, variable names and
-		# their values are separated by =, and values are a comma-separated list
 		parser.add_argument("--dry-run", action="store_true", help="Don't actually do anything productive.")
 		parser.add_argument("subdir", help="Subdir to use for this job")
 		parser.add_argument("--skip-data-file-check", help="Skip checking for presence of the initial data file.",
