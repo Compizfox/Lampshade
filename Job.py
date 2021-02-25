@@ -55,10 +55,14 @@ class Job(ABC):
 		if not path.isfile(input_file):
 			raise RuntimeError("Missing input file: {}".format(input_file))
 
-		# Assert that data file exists
-		data_file = config['static_vars']['initial_data_file']
-		if not self.args.skip_data_file_check and not path.isfile(data_file):
-			raise RuntimeError("Missing initial data file: {}".format(data_file))
+		# Assert that data file(s) exist
+		static_data_file = config['static_vars'].get('initial_data_file')
+		dyn_data_files = config['dyn_vars'].getlist('initial_data_file')
+		data_files = dyn_data_files if dyn_data_files else [static_data_file]
+		if not self.args.skip_data_file_check:
+			for data_file in data_files:
+				if not path.isfile(data_file):
+					raise RuntimeError("Missing initial data file: {}".format(data_file))
 
 		# Assert all required vars are accounted for
 		for var in config.getlist('job', 'required_vars'):
