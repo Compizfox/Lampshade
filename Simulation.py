@@ -87,7 +87,7 @@ class Simulation:
 		if self.verbose:
 			print(" ".join(uname()))
 
-		subdir = 'grid' + ''.join(['_{}{:.4f}'.format(k, float(v)) for k, v in dyn_vars.items()])
+		subdir = 'grid' + ''.join([f'_{k}{v}' if type(v) == str else f'_{k}{float(v):.4f}' for k, v in dyn_vars.items()])
 
 		# Combine vars dicts
 		static_vars.update(dyn_vars)
