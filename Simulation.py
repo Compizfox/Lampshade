@@ -64,7 +64,8 @@ class Simulation:
 				chdir(subdir)
 
 				# Modify paths to files in parent directories
-				lmp_vars['initial_data_file'] = '../' + lmp_vars['initial_data_file']
+				if not path.isabs(path.expanduser(lmp_vars['initial_data_file'])):
+					lmp_vars['initial_data_file'] = '../' + lmp_vars['initial_data_file']
 				input_filename = '../' + self.input_filename
 
 				self._run_with_vars(input_filename, lmp_vars)

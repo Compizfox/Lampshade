@@ -59,7 +59,7 @@ class Job(ABC):
 		data_files = dyn_data_files if dyn_data_files else [static_data_file]
 		if not self.args.skip_data_file_check:
 			for data_file in data_files:
-				if not path.isfile(data_file):
+				if not path.isfile(path.expanduser(data_file)):
 					raise RuntimeError("Missing initial data file: {}".format(data_file))
 
 		# Assert all required vars are accounted for
