@@ -16,6 +16,7 @@ import json
 import logging
 from subprocess import run, PIPE, STDOUT
 from typing import Sequence, Tuple
+from os import path
 
 from Job import Job
 
@@ -30,9 +31,12 @@ class SlurmJob(Job):
 			# Reconstruct dynamic vars dict
 			dyn_vars = dict(zip(self.dyn_vars.keys(), dyn_values))
 
+			# Get directory containing Lampshade
+			dir_lampshade = path.dirname(path.realpath(__file__))
+
 			# Build jobscript
 			jobscript = "#!/bin/sh\n\n"
-			jobscript += f"/usr/bin/env python3 ../run_simulation.py '{json.dumps(self.lammps_command)}' " \
+			jobscript += f"/usr/bin/env python3 {dir_lampshade}/run_simulation.py '{json.dumps(self.lammps_command)}' " \
 			             f"'{json.dumps(self.input_file)}' '{json.dumps(self.log_file)}' " \
 			             f"'{json.dumps(self.args.dry_run)}' '{json.dumps(self.static_vars)}' '{json.dumps(dyn_vars)}'"
 
