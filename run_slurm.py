@@ -38,7 +38,8 @@ class SlurmJob(Job):
 			jobscript = "#!/bin/sh\n\n"
 			jobscript += f"/usr/bin/env python3 {dir_lampshade}/run_simulation.py '{json.dumps(self.lammps_command)}' " \
 			             f"'{json.dumps(self.input_file)}' '{json.dumps(self.log_file)}' " \
-			             f"'{json.dumps(self.args.dry_run)}' '{json.dumps(self.static_vars)}' '{json.dumps(dyn_vars)}'"
+			             f"'{json.dumps(self.initial_data_file_prefix)}' '{json.dumps(self.args.dry_run)}' " \
+			             f"'{json.dumps(self.static_vars)}' '{json.dumps(dyn_vars)}'"
 
 			cp = run(self.slurm_sbatch_cmd, input=jobscript, universal_newlines=True, shell=True, stdout=PIPE,
 			         stderr=STDOUT)

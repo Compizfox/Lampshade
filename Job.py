@@ -59,8 +59,8 @@ class Job(ABC):
 		data_files = dyn_data_files if dyn_data_files else [static_data_file]
 		if not self.args.skip_data_file_check:
 			for data_file in data_files:
-				if not path.isfile(path.expanduser(data_file)):
-					raise RuntimeError("Missing initial data file: {}".format(data_file))
+				if not path.isfile(path.expanduser(config['job'].get('initial_data_file_prefix') + data_file)):
+					raise RuntimeError("Missing initial data file: {}".format(config['initial_data_file_prefix'] + data_file))
 
 		# Assert all required vars are accounted for
 		for var in config.getlist('job', 'required_vars'):
@@ -79,6 +79,7 @@ class Job(ABC):
 		self.slurm_sbatch_cmd = config['job']['slurm_sbatch_args']
 		self.input_file = input_file
 		self.log_file = config['job']['log_file']
+		self.initial_data_file_prefix = config['job'].get('initial_data_file_prefix')
 
 		# Create Cartesian product of dynamic var values. Returns flat list of tuples (*vars)
 		dyn_values_list = list(product(*self.dyn_vars.values()))

@@ -15,12 +15,13 @@ class Simulation:
 	Wraps LAMMPS.
 	"""
 
-	def __init__(self, command: str, input_filename: str, log_filename: str, dry_run: bool = False,
-	             verbose: bool = False, prefix: str = ""):
+	def __init__(self, command: str, input_filename: str, log_filename: str, initial_data_file_prefix: str,
+	             dry_run: bool = False, verbose: bool = False, prefix: str = ""):
 		"""
 		:param str  command: Command to run to call LAMMPS.
 		:param str  input_filename: Filename of the LAMMPS input file
-		:param str  log_filename:   Filename of the log file to write to
+		:param str  log_filename: Filename of the log file to write to
+		:param str  initial_data_file_prefix: Path to prepend to the initial data filename
 		:param bool dry_run: Doesn't do anything productive if true.
 		:param str  prefix:  String to prepend to all print() output.
 		"""
@@ -28,6 +29,7 @@ class Simulation:
 		self.dry_run = dry_run
 		self.input_filename = input_filename
 		self.log_filename = log_filename
+		self.initial_data_file_prefix = initial_data_file_prefix
 		self.verbose = verbose
 		self.prefix = prefix
 
@@ -63,9 +65,13 @@ class Simulation:
 				mkdir(subdir)
 				chdir(subdir)
 
+				# Add prefix
+				lmp_vars['initial_data_file'] = self.initial_data_file_prefix + lmp_vars['initial_data_file']
+
 				# Modify paths to files in parent directories
 				if not path.isabs(path.expanduser(lmp_vars['initial_data_file'])):
 					lmp_vars['initial_data_file'] = '../' + lmp_vars['initial_data_file']
+
 				input_filename = '../' + self.input_filename
 
 				self._run_with_vars(input_filename, lmp_vars)
