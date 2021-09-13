@@ -80,7 +80,7 @@ class Simulation:
 		else:
 			print("{} {}: Found existing subdir {}. Skipping.".format(self.prefix, datetime.now(), subdir))
 
-	def run_gcmc(self, static_vars: dict = None, dyn_vars: dict = None) -> None:
+	def run(self, static_vars: dict = None, dyn_vars: dict = None) -> None:
 		"""
 		Simulate a system with the given parameters.
 		:param dict static_vars: Dictionary describing static variables

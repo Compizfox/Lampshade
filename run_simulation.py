@@ -16,4 +16,4 @@ static_vars = json.loads(argv[6])
 dyn_vars = json.loads(argv[7])
 
 sim = Simulation(lammps_command, input_filename, log_filename, initial_data_file_prefix, dry_run, True)
-sim.run_gcmc(static_vars, dyn_vars)
+sim.run(static_vars, dyn_vars)
