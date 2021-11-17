@@ -75,8 +75,11 @@ foo@bar:~/Lampshade/my_job$ cp ../settings.ini.example settings.ini
 Now, it's up to you to set the correct values in `settings.ini` depending on what you want to do. Here is a quick
 rundown of the various variables:
 
+- `jobscript_header_file`: Path to a file containing the jobscript header. In its most basic form, this contains just a 
+  hashbang line, but on HPC systems where a module system is used, you also want to add required modules here. If 
+  this is unset, it will load the default jobscript header file included with Lampshade (`jobscript_header.sh`).
 - `LAMMPS_path`: Path to the LAMMPS executable, which is simply `lmp` on most systems. Change this if LAMMPS is
-  installed under a different name on your system.
+  installed under a different name/location on your system.
 - `LAMMPS_arguments`: Arguments to always pass to LAMMPS. Defaults to `-sf omp` to use the `OMP` versions of styles for
   free speed-up.
 - `MPI_path`: Path to the mpirun/srun executable.

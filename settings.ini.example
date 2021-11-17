@@ -1,4 +1,5 @@
 [lammps]
+jobscript_header_file = 
 LAMMPS_path = lmp
 LAMMPS_arguments = -sf omp
 MPI_path = srun

@@ -34,8 +34,16 @@ class SlurmJob(Job):
 			# Get directory containing Lampshade
 			dir_lampshade = path.dirname(path.realpath(__file__))
 
+			# Read jobscript header from file
+			if path.isfile('../' + self.jobscript_header_file):
+				fn = '../' + self.jobscript_header_file
+			else:
+				fn = dir_lampshade + '/jobscript_header.sh'
+
 			# Build jobscript
-			jobscript = "#!/bin/sh\n\n"
+			with open(fn, 'r') as f:
+				jobscript = f.read()
+
 			jobscript += f"/usr/bin/env python3 {dir_lampshade}/run_simulation.py '{json.dumps(self.lammps_command)}' " \
 			             f"'{json.dumps(self.input_file)}' '{json.dumps(self.log_file)}' " \
 			             f"'{json.dumps(self.initial_data_file_prefix)}' '{json.dumps(self.args.dry_run)}' " \

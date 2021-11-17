@@ -81,6 +81,7 @@ class Job(ABC):
 		self.input_file = input_file
 		self.log_file = config['job']['log_file']
 		self.initial_data_file_prefix = config['job'].get('initial_data_file_prefix')
+		self.jobscript_header_file = config['lammps'].get('jobscript_header_file')
 
 		# Create Cartesian product of dynamic var values. Returns flat list of tuples (*vars)
 		dyn_values_list = list(product(*self.dyn_vars.values()))
