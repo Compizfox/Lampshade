@@ -29,6 +29,7 @@ class Job(ABC):
 		parser.add_argument("subdir", help="Subdir to use for this job")
 		parser.add_argument("--skip-data-file-check", help="Skip checking for presence of the initial data file.",
 		                    action="store_true")
+		parser.add_argument("--force", action="store_true", help="Always run the simulation even if a simulation subdirectory already exists, and overwrite it")
 		self.args = parser.parse_args()
 
 		# Assert that subdir exists and chdir in it
