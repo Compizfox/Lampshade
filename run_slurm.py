@@ -56,7 +56,7 @@ class SlurmJob(Job):
 
 			if cp.returncode == 0:
 				logging.info(f"Successfully submitted SLURM job with {self.slurm_sbatch_cmd}:\n"
-				             f"LAMMPS command: {self.lammps_command}\n"
+				             f"Jobscript: {jobscript}\n"
 				             f"Static vars: {self.static_vars}\n"
 				             f"Dynamic vars: {dyn_vars}\n")
 
