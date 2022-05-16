@@ -61,7 +61,8 @@ class Job(ABC):
 		if not self.args.skip_data_file_check:
 			for data_file in data_files:
 				if not path.isfile(path.expanduser(config['job'].get('initial_data_file_prefix') + data_file)):
-					raise RuntimeError("Missing initial data file: {}".format(config['initial_data_file_prefix'] + data_file))
+					raise RuntimeError("Missing initial data file: {}"
+					                   .format(config['job'].get('initial_data_file_prefix') + data_file))
 
 		# Assert all required vars are accounted for
 		for var in config.getlist('job', 'required_vars'):
